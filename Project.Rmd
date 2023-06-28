@@ -1,0 +1,430 @@
+---
+output:
+  pdf_document: default
+  word_document: default
+geometry: margin=1cm
+bibliography: tandf_grsr205_207.bib
+---
+
+```{r setup, include=FALSE}
+#knitr::opts_chunk$set(echo = TRUE)
+library(ggplot2)
+#library(tidyverse)
+library(reshape2)
+library(data.table)
+#library(lmerTest)
+library(dplyr)
+library("ggpubr")
+#library(kableExtra)
+```
+
+## Detecting the Mine Site Impact on Rarerus Plantus Chlorophyll Level
+
+Author: Franco Meng, 2023-04-30
+
+### Abstract/Introduction
+Mining, has always been in the centre of the environmental concern.  The aim for this short paper is to determine, whether the mining activity has had an impact on a particular plant species known as Rarerus Plantus. 
+
+The data provided by DAA, contains 139 Rarerus Plantus’s sample records, each sample has 37 bimonthly observations of chlorophyll measurement over 6 years (Nov 16 – Nov 22), the data also indicates whether each plant was located near (<50m) or far (>50m) from the mine site activity. The mine activity commenced in June 2017.
+
+For the analysis, multiple inspections, plots, transformations were conducted.\
+The dependent variable: chlorophyll measurements, do not follow normal distribution.
+
+The non parametric test: Friedman test was used, followed by post hoc test: Pairwise comparisons using Wilcoxon rank sum test. From the test I conclude: 
+
+If the mean yearly level of Chlorophyll deemed to be the same over the year in nature, without the influence of the mine site.\
+I have 95% confidence that mining activity has had an impact on the plant Rarerus Plantus. The mining activities may also have had a long-lasting impact.
+
+It is important to note that the amount of chlorophyll in plants can be also impacted by nutrient availability, light, and environmental stress. @Cite_1 
+
+
+
+```{r include=FALSE}
+raw_df <- read.csv(file = 'DAA Case Study Data.csv')
+head(raw_df)
+```
+
+
+```{r eval=FALSE, include=FALSE}
+time<-names(raw_df)[-1]
+ggplot(stack(colMeans(raw_df[,time])), aes(ind, values)) + geom_col() + theme(axis.text.x = element_text(angle = 90, vjust = 0.5, hjust=1))
+```
+
+
+
+```{r eval=FALSE, include=FALSE}
+near <- subset(raw_df, Location == "<50m")
+far <-  subset(raw_df, Location == ">50m")
+y1 <- colMeans(near[,-1])
+y2 <- colMeans(far[,-1])
+
+par(mfrow=c(1,3))
+barplot(y1,ylim= c(0,1.5),las=3,cex.names = 0.7, main = "mean chlorophyll ~ time ",  cex.main = 0.8, sub = "Rarerus Plantus located <50m from mine site", cex.sub = 0.7)
+barplot(y2,ylim= c(0,1.5),las=3,cex.names = 0.7, main = "mean chlorophyll ~ time ",  cex.main = 0.8, sub = "Rarerus Plantus located >50m from mine site", cex.sub = 0.7)
+hist(raw_df_1$value)
+
+```
+### Methodology / Results
+
+
+R statistical tool and R markdown, with multiple packages (ggplot2, ImerTest, reshape2, etc) were used. Statistical significance was determined at 5% level.
+
+After the inspections, transformations of the data, no missing value was found, chlorophyll measurements were treated as continuous variable, where location, time, were treated as categorical variable. Two plots were attached in Appendix:
+
+Figure 1 : Data was split into two groups based on the condition of <50m of >50m,  each bar represents the mean value of all the chlorophyll values collected within a certain group, at a certain time. 
+
+The mean Chlorophyll measurement tend to vary seasonally each year. January has reported the constant lowest mean chlorophyll levels every year. One particular chlorophyll measurement of 48.9, was recorded for a sample on Jan 22. This was identified as outlier for the analysis, and all the records for that plant has been removed. 
+After the removal of the outlier, the average of all the chlorophyll measurements is 0.7268. 
+
+
+Figure 2 : a histogram of all the chlorophyll measurements . (outlier excluded)
+
+The dependent variable: chlorophyll measurements, do not follow normal distribution. 
+
+
+
+
+```{r include=FALSE}
+#barplot(raw_df$Jan.22)
+df<- filter(raw_df, raw_df$Jan.22<20)
+#barplot(df$Jan.22)
+```
+
+```{r include=FALSE}
+before_df<-df[c(1:5)]
+before_df
+
+```
+```{r include=FALSE}
+before_df$ID <- seq.int(nrow(before_df))
+#colnames(before_df) <- c('location',"1","2","3","4","ID")
+before_df
+```
+
+```{r include=FALSE}
+
+before_long <- melt(setDT(before_df), id.vars = c("ID","Location"), variable.name = "time")
+hist(before_long$value)
+
+```
+
+
+```{r include=FALSE}
+
+#before_long
+#before_near <- subset(before_long, Location == "<50m")
+#before_near
+#friedman.test(y=before_long$value, groups=before_long$time, blocks=before_long$ID)
+#before_far <- subset(before_long, Location == ">50m")
+#friedman.test(y=before_far$value, groups=before_far$time, blocks=before_far$ID)
+```
+
+
+
+**Step 1**
+
+Based on many studies on chlorophyll concentration in plants, it is expected see some seasonal variations in chlorophyll levels over the time in nature.
+
+To confirm that, a subset of the raw data, including Nov.16, Jan.17, Mar.17, and May.17 measurements taken before the commencement of mining activity (Jun.17), were firstly extracted for analysis.  
+
+Due to the non-normality of the data, the non-parametric equivalent of repeated measure anova: Friedman test was used, to compare the mean ranks between the related groups. The following three assumptions have been made. 
+
+|  1. The observations of all bimonthly measures for each plant, were independent of each other.
+|  2. The plant sampling was randomly selected from the population.
+|  3. The homogeneity of variance: the variance of the differences between bimonthly measurement was equal. 
+
+```{r include=FALSE}
+friedman.test(y=before_long$value, groups=before_long$time, blocks=before_long$ID)
+```
+
+<table>
+
+    Friedman chi-squared = 168.56, df = 3, p-value < 2.2e-16
+
+</table>
+**From the p value result above, I have 95% confidence to conclude, statistically based on the given data, before the start of mining activity, there already has had significant mean differences of chlorophyll level in Rarerus Plantus bimonthly.** 
+
+
+\newpage
+**Step 2**
+
+Due to the above tested results, it may not be the best practice to use all the bimonthly measure to examine the mining impact, as the chlorophyll level has shown statistically significant variation over time bimonthly already. 
+
+Because only 4 bimonthly measurements (Nov-16, Jan-17, Mar-17, May-17), were recorded before the mining activities begin. An average of these 4 bimonthly measurements was calculated, for each plant, and the same was done for the each year, after the mining activity has begun, in order to compare with the mean chlorophyll level before the mining activity.
+ 
+The July and September bimonthly records were not included for the analysis, as there was no July and September data recorded before the start of mining activity. 
+
+A total of 6 mean measurements for each plant has been calculated, to represent each year's mean chlorophyll levels between November to May.
+I have further assumed there was no significant change of these "Nov-May" means in nature, over the 6 recorded years.  
+
+
+
+```{r include=FALSE}
+
+df
+
+df["Nov16-May17"] <- apply(df[,c("Nov.16","Jan.17", "Mar.17", "May.17")], 1, mean)
+df["Nov17-May18"] <- apply(df[,c("Nov.17","Jan.18", "Mar.18", "May.18")], 1, mean)
+df["Nov18-May19"] <- apply(df[,c("Nov.18","Jan.19", "Mar.19", "May.19")], 1, mean)
+df["Nov19-May20"] <- apply(df[,c("Nov.19","Jan.20", "Mar.20", "May.20")], 1, mean)
+df["Nov20-May21"] <- apply(df[,c("Nov.20","Jan.21", "Mar.21", "May.21")], 1, mean)
+df["Nov21-May22"] <- apply(df[,c("Nov.21","Jan.22", "Mar.22", "May.22")], 1, mean)
+df
+
+```
+
+```{r include=FALSE}
+final_df <- subset(df[,c("Location","Nov16-May17","Nov17-May18","Nov18-May19","Nov19-May20","Nov20-May21","Nov21-May22")])
+final_df$ID <- seq.int(nrow(final_df))
+final_df
+```
+
+
+
+
+```{r include=FALSE}
+
+long_format <- melt(setDT(final_df), id.vars = c("ID","Location"), variable.name = "Time")
+long_format
+
+over_year_near <- subset(long_format, Location == "<50m")
+over_year_near
+over_year_far <- subset(long_format, Location == ">50m")
+over_year_far
+
+
+friedman.test(y=over_year_near$value, groups=over_year_near$Time, blocks=over_year_near$ID)
+
+friedman.test(y=over_year_far$value, groups=over_year_far$Time, blocks=over_year_far$ID)
+
+#friedman.test(y=long_format$value, groups=long_format$Time, blocks=long_format$ID)
+
+
+```
+A paired box plot was produced as below (Appendix: Figure 3), to visualize the 6 mean measurements over the year, the mean chlorophyll level has shown some variations over the years in both <50m and >50m groups. 
+
+
+
+```{r eval=FALSE, include=FALSE}
+
+
+ggboxplot(long_format, x = "Time", y = "value", 
+          color = "Time", palette = c("#00AFBB", "#E7B800","blue","green","black","purple"),
+          order = c("Nov16-May17","Nov17-May18","Nov18-May19","Nov19-May20","Nov20-May21","Nov21-May22"),
+          ylab = "Chlorophyll Measurements", xlab = "Time") + theme(axis.text = element_text(size =10)) 
+
+```
+
+
+The data was again transformed into long format, grouped into two groups: near (<50m), and far (<50m). Friedman tests were performed on both groups. Results are presented below : 
+
+<table>
+
+    near (<50m) the mine:      Friedman chi-squared = 34.702, df = 5, p-value = 1.726e-06
+    --------------------------------------------------------------------------------------
+    far (>50m) from the mine:  Friedman chi-squared = 94.828, df = 5, p-value < 2.2e-16
+
+</table>
+
+**If I had assumed the yearly mean chlorophyll levels stays the same over the year without the impact of mine activities, and the pre mine collected data between Nov16 - May17, reflected the true natural chlorophyll level in Rarerus Plantus.**
+
+**I then have 95% confidence to conclude that statistically, the mine site has had an impact on the Rarerus Plantus Chlorophyll Levels, regardless whether the plants located within 50 meters, or over 50 meters.**
+
+
+### Discussion 
+
+
+**1.** The Pairwise Wilcoxon Rank Sum Test, with Bonferroni correction was used as Post-hoc test. There were ties occur in the <50m group and this group has fewer than 50 plant observations, the test returned a warning message "cannot compute exact p-values with ties"
+
+Therefore, one Pairwise Wilcoxon Rank Sum Test has been carried out on the whole data, both near and far group inclusive. From the p value matrix result below we have 95% confidence to conclude, The mean chlorophyll levels for each year since the start of the mine activity, are all significantly different from the pre mine site mean chlorophyll levels, except for the fourth year Nov.20 - May.21
+
+
+P value result of Pairwise Wilcoxon Rank Sum Test: (Mine activity started in June.17)
+<table>
+
+             Nov.17-May.18  Nov.18-May.19  Nov.19-May.20  Nov.20-May.21  Nov.21-May.22
+-----------  -------------  -------------  -------------  -------------  -------------
+Nov.16-May.17    0.00416       8.7e-13        5.4e-07        0.27049        6.5e-06
+
+
+</table>
+  
+
+If I had assumed the yearly mean chlorophyll levels stays the same over the year in nature, and the pre mine collected data between Nov16 - May17, reflect the true natural chlorophyll level in Rarerus Plantus population.**
+
+I am 95% confident that statistically, the mine activity has had a long lasting impact.
+
+
+**2.** The mixed model regression was conducted, to have better insight on the mean chlorophyll variation trend over the years, the time was treated as continuous variable in the mixed model. This can be used if any prediction needs to be made, the output was attached in Appendix. 
+
+**3.**  There was no details on mine location, weather condition, and how the chlorophyll measuring was carried out, or if the date/time of each bimonthly observation was constant, the measurement unit was also unknown.
+
+**4.**  There was no details on why 50m has been decided as near or far classifications, and how far was the furthest sample located. 
+
+**5.**  Many factors may contribute to the variation of mean chlorophyll detected in this paper, such as rainfall, extreme weather, global warming. A better way to record data for " controlled group", should be discussed and designed.
+
+ 
+```{r include=FALSE}
+pairwise.wilcox.test(long_format$value, long_format$Time, p.adj = "bonf")
+```
+
+
+```{r eval=FALSE, include=FALSE}
+library(rstatix)
+over_year_near %>% friedman_effsize(value ~ Time | ID)
+
+over_year_far %>% friedman_effsize(value ~ Time | ID)
+
+long_format %>% friedman_effsize(value ~ Time | ID)
+
+```
+
+
+
+```{r eval=FALSE, include=FALSE}
+rm_anova_1 <- aov(value~ Time + Error(ID/Time), data=long_format)
+summary(rm_anova_1)
+
+```
+
+```{r eval=FALSE, include=FALSE}
+rm_anova_2 <- aov(value~ Time * Location + Error(ID/(Time*Location)), data=long_format)
+summary(rm_anova_2)
+
+```
+
+
+
+
+
+
+```{r eval=FALSE, include=FALSE}
+tab_3 <- matrix(c(5 , 0.0874, 0.017472, 5.393, '6.91e-05 ***',1,0.0216,0.021574,6.659, '0.010*', 5 , 0.0213, 0.004253, 1.313, 0.256), ncol=5, byrow=TRUE)
+colnames(tab_3) <- c('Df','Sum Sq','Mean Sq','F value', 'Pr(>F)')
+rownames(tab_3) <- c('time','Location','time:Location')
+tab_3 <- as.table(tab_3)
+y = kbl(tab_3,longtable = T, booktabs = TRUE, align="c", linesep = "")%>%
+  kable_styling() 
+   
+y
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
+```{r eval=FALSE, include=FALSE}
+long_format$Time <- as.integer(long_format$Time)
+
+```
+
+```{r eval=FALSE, include=FALSE}
+final_mix_model <- lmer(value ~ Time + Location + (1 | ID),REML = FALSE, data = long_format)
+summary(final_mix_model)
+
+```
+
+```{r eval=FALSE, include=FALSE}
+qqnorm(resid(final_mix_model))
+qqline(resid(final_mix_model))
+shapiro.test(resid(final_mix_model))
+plot(final_mix_model)
+```
+```{r eval=FALSE, include=FALSE}
+hist(resid(final_mix_model))
+```
+
+\newpage
+# References
+
+
+<div id="refs"></div>
+
+\newpage
+# Appendix
+
+
+```{r echo=FALSE, warning=FALSE}
+
+raw_df_1 <- read.csv(file = 'DAA Case Study Data.csv')
+raw_df_1$ID <- seq.int(nrow(raw_df_1))
+raw_df_1 <- melt(setDT(raw_df_1), id.vars = c("ID","Location"), variable.name = "time")
+p1<-ggplot(raw_df_1, aes(fill=Location, y=value, x=time)) + 
+    geom_bar(position="dodge2", stat="summary", fun="mean") +  ylab("mean chlorophyll level")
+p3 <- p1 + theme(axis.text.x = element_text(face="bold", 
+                           size=7, angle=80)) + theme(axis.title.y = element_text(size = 8)) + labs(caption = " Figure 1 : Mean Rarerus Plantus Chlorophyll leavel of each bimonthly measurement ") + theme(plot.caption = element_text(hjust=0))
+
+
+raw_df_2 <- read.csv(file = 'DAA Case Study Data.csv')
+raw_df_2 <- filter(raw_df_2, raw_df_2$Jan.22<20)
+raw_df_2$ID <- seq.int(nrow(raw_df_2))
+raw_df_2 <- melt(setDT(raw_df_2), id.vars = c("ID","Location"), variable.name = "time")
+p2 <- ggplot(raw_df_2, aes(x=value)) + geom_histogram(color="darkblue", fill="lightblue", bins = 39) +  xlab("chlorophyll level") + labs(caption = " Figure 2 : Histogram of observed Rarerus Plantus Chlorophyll leavel ") + theme(plot.caption = element_text(hjust=0))
+
+
+figure <- ggarrange(p3, p2, 
+                    ncol = 1, nrow = 2)
+
+figure
+```
+
+
+
+
+
+```{r echo=FALSE}
+
+ggplot(long_format, aes(x=Time, y=value, fill=Location)) + 
+    geom_boxplot() +  ylab("chlorophyll measurement") + labs(caption = " Figure 3 : Paired box plots of Rarerus Plantus Chlorophyll leavels") + theme(plot.caption = element_text(hjust=0))
+```
+
+\newpage
+
+<table>
+
+
+     Linear mixed model fit by maximum likelihood . t-tests use Satterthwaite's method ['lmerModLmerTest']
+     Formula: value ~ time + distance + (1 | ID)
+     Data: mixed_long3
+
+     AIC      BIC      logLik  deviance   df.resid 
+    ----------------------------------------------
+    -2490.1  -2466.5   1250.0  -2500.1      823 
+    ----------------------------------------------
+     Scaled residuals:
+    ----------------------------------------------
+     Min      1Q     Median      3Q     Max 
+    -3.5792 -0.5172  0.1148  0.6592  2.1422 
+
+    Random effects:
+    Groups   Name        Variance Std.Dev.
+    ID       (Intercept) 0.001342 0.03663 
+    Residual             0.002214 0.04705 
+    Number of obs: 828, groups:  ID, 138
+
+    Fixed effects:
+                    Estimate Std. Error     df  t value    Pr(>|t|) 
+                    --------------------------------------------------
+    (Intercept)   7.148e-01  7.018e-03  2.276e+02 101.855  < 2e-16 ***
+                    -------------------------------------------------- 
+    time         -5.210e-03  9.575e-04  6.900e+02  -5.442 7.34e-08 ***
+                    --------------------------------------------------
+    distance>50m  1.566e-02  7.511e-03  1.380e+02   2.085   0.0389 *  
+
+    Signif. codes:  0 ‘***’ 0.001 ‘**’ 0.01 ‘*’ 0.05 ‘.’ 0.1 ‘ ’ 1
+
+    Correlation of Fixed Effects:
+                  (Intr)  time  
+     time        -0.477       
+     distanc>50m -0.721  0.000
+
+
+<table>
